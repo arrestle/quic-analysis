@@ -8,8 +8,18 @@ graph TD
     B -->|Yes| C[Installer Template<br/>mesh-CA.crt.j2]
     B -->|No| D[Only Internal CA<br/>~1 certificate]
     
-    C --> E[Current: Simple Concatenation<br/>Internal CA + Custom CA Bundle<br/>No Deduplication]
-    E --> F[Large mesh-CA.crt<br/>154+ certificates<br/>~18,342 bytes<br/>May contain duplicates]
+    C --> C1[Creates Internal PKI<br/>Self-signed CA + Component Certs]
+    C1 --> C2[Installs Custom CA in Multiple Places]
+    
+    C2 --> C2A[System Trust Store<br/>/etc/pki/ca-trust/source/anchors/]
+    C2 --> C2B[PostgreSQL TLS Configs<br/>Controller/Hub/EDA/Gateway DBs]
+    C2 --> C2C[Component TLS Configs<br/>External integrations]
+    C2 --> C2D[mesh-CA.crt<br/>Receptor mesh - UNNECESSARY]
+    
+    C2A --> C3A[System-wide cert validation]
+    C2B --> C3B[Database TLS authentication]
+    C2C --> C3C[External service TLS]
+    C2D --> F[Large mesh-CA.crt<br/>154+ certificates<br/>~18,342 bytes<br/>QUIC PROBLEM]
     
     D --> G[Small mesh-CA.crt<br/>1 certificate<br/>~1,500 bytes]
     
@@ -81,9 +91,35 @@ graph TD
     class S,T,U,V,W,X outcome
 ```
 
+## Custom CA Certificate Usage Across AAP
+
+### Legitimate Uses (Should Keep):
+1. **System Trust Store** (`/etc/pki/ca-trust/source/anchors/`)
+   - System-wide certificate validation
+   - External service integrations
+   - Compliance requirements
+
+2. **PostgreSQL TLS Authentication**
+   - Controller database connections
+   - Hub database connections  
+   - EDA database connections
+   - Gateway database connections
+
+3. **Component External Integrations**
+   - LDAP/AD authentication
+   - External monitoring systems
+   - Backup service connections
+   - Third-party API integrations
+
+### Problematic Use (Should Remove):
+4. **Receptor mesh-CA.crt** (QUIC buffer overflow cause)
+   - Only needs internal CA for mesh authentication
+   - Custom CAs unnecessary for node-to-node communication
+   - Creates oversized CA bundles that break QUIC
+
 ## Fix Comparison Analysis
 
-### Installation Fix (Preventive)
+### Installation Fix (Architectural)
 **Target:** `aap-containerized-installer/roles/receptor/templates/mesh-CA.crt.j2`
 
 **Approach:**
