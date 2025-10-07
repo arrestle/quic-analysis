@@ -1,6 +1,7 @@
 # QUIC Buffer Overflow Analysis
 
-### **[Visual Problem/Solution Flow Diagram](quic-fixes-diagram.md)**
+### 📊 **[Visual Problem/Solution Flow Diagram](quic-fixes-diagram.md)**
+### 🔐 **[Receptor Internal CA Process Diagram](receptor-ca-flow.md)**
 
 ## Problem
 Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt exceeds 16,384 bytes.
@@ -46,7 +47,39 @@ Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt ex
 - **Template:** `aap-containerized-installer/roles/receptor/templates/mesh-CA.crt.j2`
 - **Tasks:** `aap-containerized-installer/roles/receptor/tasks/tls.yml` (lines 78-94)
 
+## Future Work Considerations
+
+### Enterprise PKI Integration
+**Compliance frameworks** (SOC 2, FedRAMP, HIPAA) increasingly require proper PKI management. Future AAP versions may need enhanced custom CA support for:
+- **Employee authentication** (smart cards, VPN access)
+- **External service integration** (enterprise databases, APIs)
+- **Regulatory compliance** (audit trails, approved CAs)
+- **Code signing** and **email encryption** requirements
+
+**References:**
+- **NIST SP 800-57**: [Key Management Recommendations](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
+- **RFC 5280**: [X.509 Certificate Standards](https://tools.ietf.org/html/rfc5280)
+
+### Architectural Review Needed
+**Question:** Do Ansible automation modules require custom CA access for external system authentication? This could impact the scope of certificate optimization work.
+
+## PKI Strategy Roadmap
+
+| **Timeline** | **Approach** | **PKI Requirements** | **Implementation** |
+|--------------|--------------|---------------------|-------------------|
+| **Short-term**<br/>*(0-6 months)* | Simple installer fix | Internal self-signed CA sufficient | Remove custom CA concatenation from mesh-CA.crt |
+| **Medium-term**<br/>*(6-18 months)* | Monitor compliance trends | Assess enterprise PKI integration needs | Architecture review of certificate usage patterns |
+| **Long-term**<br/>*(18+ months)* | Enterprise PKI support | Full custom CA integration for compliance | Certificate optimization if required by regulations |
+
+### Compliance Drivers
+- **[SOC 2](https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/aicpasoc2report.html):** Service organization controls for security
+- **[FedRAMP](https://www.fedramp.gov/):** Federal risk and authorization management program
+- **[HIPAA](https://www.hhs.gov/hipaa/for-professionals/security/index.html):** Healthcare information security requirements
+- **Enterprise security policies:** Trend away from self-signed certificates  
+- **[Zero Trust architectures](https://www.nist.gov/publications/zero-trust-architecture):** Enhanced certificate validation requirements
+
 ## References
-- **KCS:** https://access.redhat.com/solutions/7129200
-- **Epic:** [AAP-51480](https://issues.redhat.com/browse/AAP-51480)
-- **Related Story:** [AAP-51479](https://issues.redhat.com/browse/AAP-51479)
+- **Epic:** [AAP-51480](https://issues.redhat.com/browse/AAP-51480) - Receptor CA Bundle Optimizations
+- **KCS:** https://access.redhat.com/solutions/7129200 - Current workaround documentation
+- **Related Story:** [AAP-51479](https://issues.redhat.com/browse/AAP-51479) - ReceptorVerifyFunc optimization
+- **Standards:** [NIST SP 800-57](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final) - Key Management Guidelines
