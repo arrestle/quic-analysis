@@ -34,7 +34,6 @@ Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt ex
 - Filter expired certificates
 - Remove duplicates by SHA-256 fingerprint  
 - Size validation before template rendering
-- See `jira-installer.md` for detailed implementation
 
 ## Customer Impact
 - **Current:** Multiple support cases (04227540, 04226082, 04230597, etc.)
