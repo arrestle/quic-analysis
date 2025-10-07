@@ -1,5 +1,7 @@
 # QUIC Buffer Overflow Analysis
 
+### **[Visual Problem/Solution Flow Diagram](quic-fixes-diagram.md)**
+
 ## Problem
 Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt exceeds 16,384 bytes.
 
