@@ -22,15 +22,23 @@ Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt ex
 
 ## Deployment Scope
 
-**Affected Installations:**
-- Traditional VM/bare metal deployments (automation-platform-collection)
-- Containerized/Podman deployments (aap-containerized-installer)
+### ⚠️ **Affected Installations (File-Based):**
+- **RPM-A/B:** Traditional VM/bare metal (automation-platform-collection)
+- **CONT-A/B:** Containerized/Podman (aap-containerized-installer)
+- **Problem:** File-based mesh-CA.crt allows large CA bundle concatenation
 
-**Likely Not Affected:**
-- Kubernetes operator deployments (different certificate architecture)
-- Cloud marketplace offerings (vendor-specific implementations)
+### ✅ **NOT Affected (Secret-Based):**
+- **OCP-A/B:** Kubernetes/OpenShift (AAP Operator)
+- **AWX/Hub/EDA Operators:** Component operators on K8s
+- **Protection:** K8s Secret format stores single CA only, prevents bundle accumulation
 
-See [Deployment Types Analysis](deployment-types-ca-support.md) for detailed breakdown.
+**Why Operators Are Safe:**
+- Certificates stored as K8s TLS Secrets (cert/key pair format)
+- **Cannot concatenate multiple CAs** - Secret structure prevents it
+- Auto-generated or single customer CA only
+- Architecturally immune to QUIC buffer overflow issue
+
+See [Deployment Types Analysis](deployment-types-ca-support.md) for comprehensive breakdown.
 
 ## Solution Options
 
@@ -91,8 +99,19 @@ See [Deployment Types Analysis](deployment-types-ca-support.md) for detailed bre
 - **Enterprise security policies:** Trend away from self-signed certificates  
 - **[Zero Trust architectures](https://www.nist.gov/publications/zero-trust-architecture):** Enhanced certificate validation requirements
 
+## Repository Reference
+
+| Repository | Type | Key Files | GitHub |
+|-----------|------|-----------|--------|
+| **receptor** | Core networking | [netceptor.go:1105-1107](https://github.com/ansible/receptor/blob/devel/pkg/netceptor/netceptor.go#L1105-L1107) | [ansible/receptor](https://github.com/ansible/receptor) |
+| **automation-platform-collection** | VM installer | [roles/receptor/templates/](https://github.com/ansible/automation-platform-collection/tree/main/roles/receptor/templates)<br/>[tasks/tls_ca.yml](https://github.com/ansible/automation-platform-collection/blob/main/roles/receptor/tasks/tls_ca.yml) | [ansible/automation-platform-collection](https://github.com/ansible/automation-platform-collection) |
+| **aap-containerized-installer** | Container installer | [roles/receptor/templates/mesh-CA.crt.j2](https://github.com/ansible/aap-containerized-installer/blob/main/roles/receptor/templates/mesh-CA.crt.j2)<br/>[tasks/tls.yml](https://github.com/ansible/aap-containerized-installer/blob/main/roles/receptor/tasks/tls.yml) | [ansible/aap-containerized-installer](https://github.com/ansible/aap-containerized-installer) |
+| **awx-operator** | K8s operator | [custom-receptor-certs.md](https://github.com/ansible/awx-operator/blob/devel/docs/user-guide/advanced-configuration/custom-receptor-certs.md)<br/>[receptor_ca_secret.yaml.j2](https://github.com/ansible/awx-operator/blob/devel/roles/installer/templates/secrets/receptor_ca_secret.yaml.j2) | [ansible/awx-operator](https://github.com/ansible/awx-operator) |
+| **awx** | Controller app | [tasks/receptor.py:785-792](https://github.com/ansible/awx/blob/devel/awx/main/tasks/receptor.py#L785-L792) | [ansible/awx](https://github.com/ansible/awx) |
+
 ## References
 - **Epic:** [AAP-51480](https://issues.redhat.com/browse/AAP-51480) - Receptor CA Bundle Optimizations
+- **Original Bug:** [AAP-51326](https://issues.redhat.com/browse/AAP-51326) - CRYPTO_BUFFER_EXCEEDED issue
 - **KCS:** https://access.redhat.com/solutions/7129200 - Current workaround documentation
 - **Related Story:** [AAP-51479](https://issues.redhat.com/browse/AAP-51479) - ReceptorVerifyFunc optimization
 - **Standards:** [NIST SP 800-57](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final) - Key Management Guidelines
