@@ -2,6 +2,7 @@
 
 ### 📊 **[Visual Problem/Solution Flow Diagram](quic-fixes-diagram.md)**
 ### 🔐 **[Receptor Internal CA Process Diagram](receptor-ca-flow.md)**
+### 🏗️ **[Deployment Types and CA Support Matrix](deployment-types-ca-support.md)**
 
 ## Problem
 Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt exceeds 16,384 bytes.
@@ -18,6 +19,18 @@ Receptor QUIC connections fail with `CRYPTO_BUFFER_EXCEEDED` when mesh-CA.crt ex
 ```
 
 **Issue:** Simple concatenation creates large CA bundles (154+ certificates, ~18,342 bytes) that exceed QUIC's 16,384-byte limit.
+
+## Deployment Scope
+
+**Affected Installations:**
+- Traditional VM/bare metal deployments (automation-platform-collection)
+- Containerized/Podman deployments (aap-containerized-installer)
+
+**Likely Not Affected:**
+- Kubernetes operator deployments (different certificate architecture)
+- Cloud marketplace offerings (vendor-specific implementations)
+
+See [Deployment Types Analysis](deployment-types-ca-support.md) for detailed breakdown.
 
 ## Solution Options
 
